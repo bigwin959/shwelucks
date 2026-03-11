@@ -6,8 +6,15 @@ import '../game_state.dart';
 class UserHeader extends StatelessWidget {
   const UserHeader({super.key});
 
-  /// Returns VIP level (1-5) based on high-score milestones.
-  static int _vipLevel(int highScore) {
+  static String _rankLabel(int highScore) {
+    if (highScore >= 50000) return 'Archmage';
+    if (highScore >= 20000) return 'Sage';
+    if (highScore >= 10000) return 'Alchemist';
+    if (highScore >= 5000)  return 'Scholar';
+    return 'Apprentice';
+  }
+
+  static int _rankLevel(int highScore) {
     if (highScore >= 50000) return 5;
     if (highScore >= 20000) return 4;
     if (highScore >= 10000) return 3;
@@ -15,17 +22,15 @@ class UserHeader extends StatelessWidget {
     return 1;
   }
 
-  static String _vipLabel(int level) {
-    const labels = ['', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
-    return labels[level.clamp(1, 5)];
-  }
+  static const kCyan   = Color(0xFF00F5FF);
+  static const kViolet = Color(0xFF7B2FFF);
 
   @override
   Widget build(BuildContext context) {
     final state  = context.watch<GameState>();
     final coins  = state.coins;
-    final level  = _vipLevel(state.highScore);
-    final label  = _vipLabel(level);
+    final rank   = _rankLabel(state.highScore);
+    final level  = _rankLevel(state.highScore);
     final fmt    = NumberFormat('#,###');
 
     return Container(
@@ -35,17 +40,17 @@ class UserHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Avatar + name + VIP
               Row(
                 children: [
+                  // Avatar with cyan glow
                   Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.amber, width: 2),
+                      border: Border.all(color: kCyan, width: 2),
                       boxShadow: const [
-                        BoxShadow(color: Color(0x44FFCC00), blurRadius: 10),
+                        BoxShadow(color: Color(0x4400F5FF), blurRadius: 12),
                       ],
                       image: const DecorationImage(
                         image: NetworkImage("https://i.pravatar.cc/150?img=11"),
@@ -58,32 +63,25 @@ class UserHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Hey, User_9921 👋',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Lab_9921 🧪',
+                        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 3),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.15),
+                          color: kCyan.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: kCyan.withOpacity(0.4)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.diamond, color: Colors.amber, size: 12),
+                            const Icon(Icons.science_rounded, color: kCyan, size: 12),
                             const SizedBox(width: 3),
                             Text(
-                              'VIP $level · $label',
-                              style: const TextStyle(
-                                color: Colors.amber,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'Rank $level · $rank',
+                              style: const TextStyle(color: kCyan, fontSize: 11, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -93,35 +91,27 @@ class UserHeader extends StatelessWidget {
                 ],
               ),
 
-              // Notification bell
+              // Notification
               GestureDetector(
                 onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('No new notifications'),
-                    duration: Duration(seconds: 1),
-                  ),
+                  const SnackBar(content: Text('No new lab alerts'), duration: Duration(seconds: 1)),
                 ),
                 child: Stack(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withOpacity(0.04),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: kCyan.withOpacity(0.15)),
                       ),
-                      child: const Icon(Icons.notifications_outlined, color: Colors.white70, size: 22),
+                      child: const Icon(Icons.notifications_outlined, color: Colors.white54, size: 22),
                     ),
                     Positioned(
-                      right: 8,
-                      top: 8,
+                      right: 8, top: 8,
                       child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
+                        width: 8, height: 8,
+                        decoration: const BoxDecoration(color: kCyan, shape: BoxShape.circle),
                       ),
                     ),
                   ],
@@ -132,60 +122,45 @@ class UserHeader extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // Balance + deposit button row
+          // Energy balance card
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.4),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.amber.withOpacity(0.3), width: 1),
+              border: Border.all(color: kCyan.withOpacity(0.25), width: 1),
             ),
             child: Row(
               children: [
-                const Icon(Icons.account_balance_wallet_rounded, color: Colors.amber, size: 20),
+                const Icon(Icons.bolt_rounded, color: kCyan, size: 20),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Wallet Balance',
-                      style: TextStyle(color: Colors.grey, fontSize: 11),
-                    ),
-                    // Animated coin counter
+                    const Text('Energy Units', style: TextStyle(color: Colors.grey, fontSize: 11)),
                     TweenAnimationBuilder<int>(
                       tween: IntTween(begin: coins, end: coins),
                       duration: const Duration(milliseconds: 600),
                       curve: Curves.easeOut,
                       builder: (_, val, __) => Text(
-                        '${fmt.format(val)} Ks',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
+                        '${fmt.format(val)} EU',
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ],
                 ),
                 const Spacer(),
-                // Deposit button
                 GestureDetector(
                   onTap: () {},
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFCC00), Color(0xFFFF8800)],
-                      ),
+                      gradient: const LinearGradient(colors: [kCyan, kViolet]),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      '+ Deposit',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                      ),
+                      '+ Charge',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
                     ),
                   ),
                 ),

@@ -7,18 +7,21 @@ import 'game_screen.dart';
 import 'achievements_screen.dart';
 import 'profile_tab.dart';
 
-// Achievement display names for toast notifications
-const _achNames = {
-  'first_spin':  '🎰 First Spin!',
-  'first_win':   '🎉 First Win!',
-  'streak_3':    '🔥 On Fire! 3-in-a-row',
-  'streak_5':    '🌋 Unstoppable! 5-in-a-row',
-  'coins_5000':  '💰 5K Club',
-  'coins_10000': '🤑 10K Elite',
-  'spins_50':    '🎡 Committed – 50 Spins',
-  'spins_100':   '💫 Spin Master – 100 Spins',
-  'scatter_1':   '🌟 Scatter Hunter',
-  'jackpot_1':   '7️⃣ Lucky Seven – Jackpot!',
+const _kCyan   = Color(0xFF00F5FF);
+const _kViolet = Color(0xFF7B2FFF);
+
+// Map formula IDs to alchemy toast labels
+const _formulaNames = {
+  'first_spin':  '⚗️ First Synthesis!',
+  'first_win':   '🧪 First Reaction!',
+  'streak_3':    '🔥 Chain Reaction x3!',
+  'streak_5':    '🌋 Unstable Chain x5!',
+  'coins_5000':  '💰 5K EU Reserve!',
+  'coins_10000': '🤑 10K EU Vault!',
+  'spins_50':    '🔬 50 Experiments!',
+  'spins_100':   '🌀 Synthesis Master!',
+  'scatter_1':   '🌟 Catalyst Trigger!',
+  'jackpot_1':   '☢️ Critical Synthesis!',
 };
 
 class MainTabScreen extends StatefulWidget {
@@ -34,7 +37,6 @@ class _MainTabScreenState extends State<MainTabScreen> {
   @override
   void initState() {
     super.initState();
-    // Listen for achievement unlocks and fire toasts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GameState>().addListener(_onGameStateChange);
     });
@@ -42,7 +44,6 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
   @override
   void dispose() {
-    // Safe to call even if context is no longer mounted
     try { context.read<GameState>().removeListener(_onGameStateChange); } catch (_) {}
     super.dispose();
   }
@@ -51,14 +52,14 @@ class _MainTabScreenState extends State<MainTabScreen> {
     if (!mounted) return;
     final toasts = context.read<GameState>().popNewlyUnlocked();
     for (final id in toasts) {
-      final name = _achNames[id] ?? id;
+      final name = _formulaNames[id] ?? id;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Achievement Unlocked: $name',
+            'Formula Unlocked: $name',
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
-          backgroundColor: Colors.amber,
+          backgroundColor: _kCyan,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -80,14 +81,14 @@ class _MainTabScreenState extends State<MainTabScreen> {
     ];
 
     const tabs = [
-      _TabData(icon: Icons.home_rounded,          label: 'Home'),
-      _TabData(icon: Icons.casino_rounded,         label: 'Play',    isHighlight: true),
-      _TabData(icon: Icons.emoji_events_rounded,   label: 'Stats'),
-      _TabData(icon: Icons.person_rounded,         label: 'Profile'),
+      _TabData(icon: Icons.home_rounded,        label: 'Home'),
+      _TabData(icon: Icons.science_rounded,      label: 'Lab',      isHighlight: true),
+      _TabData(icon: Icons.biotech_rounded,      label: 'Formulas'),
+      _TabData(icon: Icons.person_rounded,       label: 'Profile'),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080810),
+      backgroundColor: const Color(0xFF050510),
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 220),
@@ -105,9 +106,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
   Widget _buildBottomNav(List<_TabData> tabs) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D0D16),
+        color: const Color(0xFF080818),
         border: Border(
-          top: BorderSide(color: Colors.amber.withOpacity(0.12), width: 1),
+          top: BorderSide(color: _kCyan.withOpacity(0.12), width: 1),
         ),
       ),
       child: SafeArea(
@@ -126,6 +127,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
   Widget _buildNavItem(int index, _TabData tab) {
     final isSelected = _currentIndex == index;
+
     if (tab.isHighlight) {
       return GestureDetector(
         onTap: () { HapticFeedback.lightImpact(); setState(() => _currentIndex = index); },
@@ -133,21 +135,22 @@ class _MainTabScreenState extends State<MainTabScreen> {
         child: Center(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            width: 52,
-            height: 52,
+            width: 52, height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFCC00), Color(0xFFFF8800)],
+                colors: [_kCyan, _kViolet],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFF8800).withOpacity(isSelected ? 0.7 : 0.3),
-                  blurRadius: isSelected ? 18 : 8,
+                  color: _kCyan.withOpacity(isSelected ? 0.6 : 0.25),
+                  blurRadius: isSelected ? 20 : 8,
                 ),
               ],
             ),
-            child: Icon(tab.icon, color: Colors.black, size: 26),
+            child: Icon(tab.icon, color: Colors.white, size: 26),
           ),
         ),
       );
@@ -161,7 +164,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
-              color: isSelected ? Colors.amber : Colors.transparent,
+              color: isSelected ? _kCyan : Colors.transparent,
               width: 2,
             ),
           ),
@@ -169,12 +172,13 @@ class _MainTabScreenState extends State<MainTabScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(tab.icon, color: isSelected ? Colors.amber : Colors.grey[600], size: 22),
+            Icon(tab.icon,
+              color: isSelected ? _kCyan : Colors.grey[600], size: 22),
             const SizedBox(height: 3),
             Text(
               tab.label,
               style: TextStyle(
-                color: isSelected ? Colors.amber : Colors.grey[600],
+                color: isSelected ? _kCyan : Colors.grey[600],
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -188,7 +192,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
 class _TabData {
   final IconData icon;
-  final String label;
-  final bool isHighlight;
+  final String   label;
+  final bool     isHighlight;
   const _TabData({required this.icon, required this.label, this.isHighlight = false});
 }

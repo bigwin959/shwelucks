@@ -7,7 +7,7 @@ class GameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080810),
+      backgroundColor: const Color(0xFF050510),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -16,18 +16,11 @@ class GameScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── App Header ──────────────────────────────────────────
                 _buildHeader(),
                 const SizedBox(height: 24),
-
-                // ── Game ─────────────────────────────────────────────────
                 const SlotGame(),
-
                 const SizedBox(height: 24),
-
-                // ── For Entertainment Only badge ─────────────────────────
                 _buildDisclaimerBadge(),
-
                 const SizedBox(height: 24),
               ],
             ),
@@ -40,38 +33,38 @@ class GameScreen extends StatelessWidget {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Icon
+        // Flask icon with glow
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
-              colors: [Color(0xFF2A1A00), Color(0xFF1A0D00)],
+              colors: [Color(0xFF0A0A2A), Color(0xFF050510)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            border: Border.all(color: Colors.amber.withOpacity(0.6), width: 2),
-            boxShadow: [
-              BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 30, spreadRadius: 5),
+            border: Border.all(color: const Color(0xFF00F5FF).withOpacity(0.7), width: 2),
+            boxShadow: const [
+              BoxShadow(color: Color(0x8800F5FF), blurRadius: 30, spreadRadius: 5),
             ],
           ),
           child: const Center(
-            child: Text('🎰', style: TextStyle(fontSize: 40)),
+            child: Text('⚗️', style: TextStyle(fontSize: 40)),
           ),
         ),
         const SizedBox(height: 12),
 
-        // Title
+        // Title with cyan shader
         ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFFFD700), Color(0xFFFF8800), Color(0xFFFFD700)],
+            colors: [Color(0xFF00F5FF), Color(0xFF7B2FFF), Color(0xFF00F5FF)],
           ).createShader(bounds),
           child: const Text(
-            'LUCKY REELS',
+            'SYNTHESIS LAB',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 30,
+              fontSize: 28,
               fontWeight: FontWeight.w900,
               letterSpacing: 4,
             ),
@@ -79,12 +72,13 @@ class GameScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Spin & Match to Win Virtual Coins!',
+          'Combine molecules · Trigger reactions · Collect Energy',
           style: TextStyle(
             color: Colors.grey[500],
-            fontSize: 13,
+            fontSize: 12,
             letterSpacing: 0.5,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -94,18 +88,18 @@ class GameScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: const Color(0xFF00F5FF).withOpacity(0.1)),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.info_outline, color: Colors.white38, size: 15),
+          Icon(Icons.science_outlined, color: Colors.white24, size: 15),
           SizedBox(width: 8),
           Flexible(
             child: Text(
-              'For entertainment only · No real money · Free to play',
+              'Simulation only · No real currency · Free to experiment',
               style: TextStyle(color: Colors.white38, fontSize: 11),
               textAlign: TextAlign.center,
             ),

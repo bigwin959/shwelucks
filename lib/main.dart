@@ -4,25 +4,29 @@ import 'game_state.dart';
 import 'pages/main_tab_screen.dart';
 
 void main() {
-  runApp(const LuckyReelsApp());
+  runApp(const AlchemyLabApp());
 }
 
-class LuckyReelsApp extends StatelessWidget {
-  const LuckyReelsApp({super.key});
+class AlchemyLabApp extends StatelessWidget {
+  const AlchemyLabApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => GameState(),
       child: MaterialApp(
-        title: 'Lucky Reels',
+        title: 'Shwe Lucks — Alchemy Lab',
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: const Color(0xFF080810),
-          primaryColor: Colors.amber,
+          scaffoldBackgroundColor: const Color(0xFF050510),
+          primaryColor: const Color(0xFF00F5FF),
           colorScheme: const ColorScheme.dark(
-            primary: Colors.amber,
-            secondary: Colors.amberAccent,
+            primary: Color(0xFF00F5FF),
+            secondary: Color(0xFF7B2FFF),
+          ),
+          snackBarTheme: const SnackBarThemeData(
+            backgroundColor: Color(0xFF00F5FF),
+            contentTextStyle: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
         ),
         home: const MainTabScreen(),

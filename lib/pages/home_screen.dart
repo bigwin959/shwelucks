@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../game_state.dart';
 
+const _kCyan   = Color(0xFF00F5FF);
+const _kViolet = Color(0xFF7B2FFF);
+
 class HomeScreen extends StatelessWidget {
   final VoidCallback onPlayTap;
   const HomeScreen({super.key, required this.onPlayTap});
@@ -17,24 +20,15 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── App Title Row ─────────────────────────────────────────────
             _buildTitleRow(),
             const SizedBox(height: 20),
-
-            // ── Stats Cards ───────────────────────────────────────────────
             _buildStatsCards(state),
             const SizedBox(height: 20),
-
-            // ── Daily Bonus Card ──────────────────────────────────────────
             _buildDailyBonusCard(context, state),
             const SizedBox(height: 20),
-
-            // ── Play Now Card ─────────────────────────────────────────────
-            _buildPlayNowCard(context),
+            _buildSynthesizeNowCard(context),
             const SizedBox(height: 20),
-
-            // ── Tips Section ──────────────────────────────────────────────
-            _buildTips(),
+            _buildLabTips(),
             const SizedBox(height: 30),
           ],
         ),
@@ -50,12 +44,11 @@ class HomeScreen extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2A1A00), Color(0xFF1A0D00)],
-            ),
-            border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1.5),
+            color: const Color(0xFF080820),
+            border: Border.all(color: _kCyan.withOpacity(0.5), width: 1.5),
+            boxShadow: const [BoxShadow(color: Color(0x4400F5FF), blurRadius: 10)],
           ),
-          child: const Center(child: Text('🎰', style: TextStyle(fontSize: 24))),
+          child: const Center(child: Text('⚗️', style: TextStyle(fontSize: 24))),
         ),
         const SizedBox(width: 12),
         Column(
@@ -63,20 +56,15 @@ class HomeScreen extends StatelessWidget {
           children: [
             ShaderMask(
               shaderCallback: (b) => const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFF8800)],
+                colors: [_kCyan, _kViolet],
               ).createShader(b),
               child: const Text(
-                'Lucky Reels',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
+                'Alchemy Lab',
+                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1),
               ),
             ),
             const Text(
-              'Virtual Coins · Free to Play',
+              'Molecular Synthesis · Free to Experiment',
               style: TextStyle(color: Colors.grey, fontSize: 11),
             ),
           ],
@@ -88,11 +76,11 @@ class HomeScreen extends StatelessWidget {
   Widget _buildStatsCards(GameState state) {
     return Row(
       children: [
-        _statCard('🪙', 'My Coins', state.coins.toString(), Colors.amber),
+        _statCard('⚡', 'Energy', state.coins.toString(),         _kCyan),
         const SizedBox(width: 10),
-        _statCard('🏆', 'High Score', state.highScore.toString(), Colors.greenAccent),
+        _statCard('📈', 'Peak EU',  state.highScore.toString(),   const Color(0xFF00FF99)),
         const SizedBox(width: 10),
-        _statCard('🎯', 'Total Spins', state.totalSpins.toString(), Colors.blue[300]!),
+        _statCard('🔬', 'Experiments', state.totalSpins.toString(), const Color(0xFF9966FF)),
       ],
     );
   }
@@ -102,7 +90,7 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.07),
+          color: color.withOpacity(0.06),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -110,10 +98,8 @@ class HomeScreen extends StatelessWidget {
           children: [
             Text(emoji, style: const TextStyle(fontSize: 22)),
             const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 15),
-            ),
+            Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 14),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
           ],
         ),
@@ -129,8 +115,11 @@ class HomeScreen extends StatelessWidget {
               state.claimBonus(200);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🎁 Daily Bonus Claimed! +200 Coins'),
-                  backgroundColor: Colors.green,
+                  content: Text(
+                    '⚗️ Daily Reagents Claimed! +200 EU',
+                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: _kCyan,
                   duration: Duration(seconds: 2),
                 ),
               );
@@ -142,39 +131,39 @@ class HomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: canClaim
-                ? [const Color(0xFF1A2A00), const Color(0xFF0D1800)]
-                : [const Color(0xFF1A1A1A), const Color(0xFF111111)],
+                ? [const Color(0xFF001A15), const Color(0xFF00120D)]
+                : [const Color(0xFF0F0F18), const Color(0xFF080810)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: canClaim ? Colors.greenAccent.withOpacity(0.6) : Colors.grey.withOpacity(0.2),
+            color: canClaim ? const Color(0xFF00FF99).withOpacity(0.5) : Colors.grey.withOpacity(0.15),
             width: 1.5,
           ),
           boxShadow: canClaim
-              ? [BoxShadow(color: Colors.greenAccent.withOpacity(0.1), blurRadius: 16)]
+              ? [const BoxShadow(color: Color(0x2200FF99), blurRadius: 16)]
               : [],
         ),
         child: Row(
           children: [
-            Text(canClaim ? '🎁' : '✅', style: const TextStyle(fontSize: 36)),
+            Text(canClaim ? '⚗️' : '✅', style: const TextStyle(fontSize: 34)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    canClaim ? 'Daily Bonus Ready!' : 'Daily Bonus Claimed',
+                    canClaim ? 'Daily Reagents Ready!' : 'Reagents Collected',
                     style: TextStyle(
                       color: canClaim ? Colors.white : Colors.grey,
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    canClaim ? 'Tap to claim +200 free coins!' : 'Come back tomorrow for more!',
+                    canClaim ? 'Tap to collect +200 EU free reagents' : 'Come back tomorrow for more!',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
@@ -184,14 +173,14 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.greenAccent.withOpacity(0.15),
+                  color: const Color(0xFF00FF99).withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.greenAccent, width: 1),
+                  border: Border.all(color: const Color(0xFF00FF99), width: 1),
                 ),
                 child: const Text(
-                  'CLAIM',
+                  'COLLECT',
                   style: TextStyle(
-                    color: Colors.greenAccent,
+                    color: Color(0xFF00FF99),
                     fontWeight: FontWeight.w900,
                     fontSize: 12,
                   ),
@@ -203,7 +192,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlayNowCard(BuildContext context) {
+  Widget _buildSynthesizeNowCard(BuildContext context) {
     return GestureDetector(
       onTap: onPlayTap,
       child: Container(
@@ -211,46 +200,43 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF2A1A00), Color(0xFF1A0D00)],
+            colors: [Color(0xFF080825), Color(0xFF04041A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1.5),
-          boxShadow: [
-            BoxShadow(color: Colors.amber.withOpacity(0.12), blurRadius: 20),
-          ],
+          border: Border.all(color: _kCyan.withOpacity(0.4), width: 1.5),
+          boxShadow: const [BoxShadow(color: Color(0x2200F5FF), blurRadius: 20)],
         ),
         child: Row(
           children: [
-            const Text('🎰', style: TextStyle(fontSize: 48)),
+            const Text('⚗️', style: TextStyle(fontSize: 48)),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Lucky Slots',
+                    'Synthesis Reactor',
                     style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Match 3 symbols · Earn bonus coins!',
-                    style: TextStyle(color: Colors.amber[300], fontSize: 12),
+                    'Combine molecules · Trigger chain reactions!',
+                    style: TextStyle(color: _kCyan.withOpacity(0.7), fontSize: 12),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFCC00), Color(0xFFFF8800)],
-                      ),
+                      gradient: const LinearGradient(colors: [_kCyan, _kViolet]),
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [BoxShadow(color: Color(0x8800F5FF), blurRadius: 10)],
                     ),
                     child: const Text(
-                      '▶  PLAY NOW',
+                      '⚗  SYNTHESIZE',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                         letterSpacing: 1,
@@ -260,23 +246,32 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+            Column(
+              children: [
+                const Text('☢️', style: TextStyle(fontSize: 20)),
+                const Text('Critical', style: TextStyle(color: Colors.grey, fontSize: 9)),
+                const SizedBox(height: 4),
+                Text('x50',
+                  style: const TextStyle(color: _kCyan, fontWeight: FontWeight.w900, fontSize: 20)),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTips() {
+  Widget _buildLabTips() {
     const tips = [
-      ('⭐', 'Land 3 Stars for a big coin bonus!'),
-      ('🌟', 'Match 3 Scatters to unlock 5 Free Spins!'),
-      ('🔥', 'Keep winning to build a streak multiplier!'),
+      ('⚗️',  'Match 3 identical molecules for a Chain Reaction!'),
+      ('🌟',  'Trigger 3 Catalyst+ Scatters for 5 Free Reactions!'),
+      ('🔥',  'Build a win streak to multiply your EU output!'),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '💡 Tips',
+          '🔬 Lab Notes',
           style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),

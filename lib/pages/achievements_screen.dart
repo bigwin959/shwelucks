@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../game_state.dart';
 
-// Achievement definitions
-class Achievement {
+const _kCyan   = Color(0xFF00F5FF);
+const _kViolet = Color(0xFF7B2FFF);
+
+// Formula tablet definitions (alchemy-themed achievements)
+class Formula {
   final String id;
   final String emoji;
   final String title;
   final String desc;
-  final Color color;
-  const Achievement({
+  final Color  color;
+  const Formula({
     required this.id,
     required this.emoji,
     required this.title,
@@ -18,17 +21,17 @@ class Achievement {
   });
 }
 
-const List<Achievement> kAchievements = [
-  Achievement(id: 'first_spin',  emoji: '🎰', title: 'First Spin!',       desc: 'Spin the reels for the first time',   color: Color(0xFFFFCC00)),
-  Achievement(id: 'first_win',   emoji: '🎉', title: 'First Win!',        desc: 'Score your first coin match',          color: Color(0xFF4CAF50)),
-  Achievement(id: 'streak_3',    emoji: '🔥', title: 'On Fire!',           desc: 'Win 3 times in a row',                color: Color(0xFFFF5722)),
-  Achievement(id: 'streak_5',    emoji: '🌋', title: 'Unstoppable!',       desc: 'Win 5 times in a row',                color: Color(0xFFFF1744)),
-  Achievement(id: 'coins_5000',  emoji: '💰', title: '5K Club',            desc: 'Reach 5,000 coins',                   color: Color(0xFFFFD700)),
-  Achievement(id: 'coins_10000', emoji: '🤑', title: '10K Elite',          desc: 'Reach 10,000 coins',                  color: Color(0xFFFF8800)),
-  Achievement(id: 'spins_50',    emoji: '🎡', title: 'Committed',          desc: 'Spin the reels 50 times',             color: Color(0xFF2196F3)),
-  Achievement(id: 'spins_100',   emoji: '💫', title: 'Spin Master',        desc: 'Spin the reels 100 times',            color: Color(0xFF9C27B0)),
-  Achievement(id: 'scatter_1',   emoji: '🌟', title: 'Scatter Hunter',     desc: 'Trigger your first Free Spins round', color: Color(0xFFAA88FF)),
-  Achievement(id: 'jackpot_1',   emoji: '7️⃣',  title: 'Lucky Seven!',      desc: 'Hit the Lucky 7 jackpot',             color: Color(0xFFFF4444)),
+const List<Formula> kFormulas = [
+  Formula(id: 'first_spin',  emoji: '⚗️', title: 'First Synthesis',     desc: 'Run your first molecular reaction',      color: _kCyan),
+  Formula(id: 'first_win',   emoji: '🧪', title: 'First Reaction!',      desc: 'Trigger your first successful bond',     color: Color(0xFF00FF99)),
+  Formula(id: 'streak_3',    emoji: '🔥', title: 'Chain Reaction x3',    desc: 'Win 3 reactions in a row',               color: Color(0xFFFF6644)),
+  Formula(id: 'streak_5',    emoji: '🌋', title: 'Unstable Chain x5',    desc: 'Win 5 reactions in a row',               color: Color(0xFFFF2244)),
+  Formula(id: 'coins_5000',  emoji: '💰', title: '5K EU Reserve',        desc: 'Accumulate 5,000 Energy Units',          color: Color(0xFF00CFFF)),
+  Formula(id: 'coins_10000', emoji: '🤑', title: '10K EU Vault',         desc: 'Accumulate 10,000 Energy Units',         color: _kCyan),
+  Formula(id: 'spins_50',    emoji: '🔬', title: '50 Experiments',       desc: 'Complete 50 synthesis experiments',      color: Color(0xFF88AAFF)),
+  Formula(id: 'spins_100',   emoji: '🌀', title: 'Synthesis Master',     desc: 'Complete 100 synthesis experiments',     color: _kViolet),
+  Formula(id: 'scatter_1',   emoji: '🌟', title: 'Catalyst Trigger',     desc: 'Activate your first Catalyst+ event',    color: Color(0xFFAA44FF)),
+  Formula(id: 'jackpot_1',   emoji: '☢️', title: 'Critical Synthesis!',  desc: 'Achieve a Critical Synthesis reaction',  color: Color(0xFFFF2244)),
 ];
 
 class AchievementsScreen extends StatelessWidget {
@@ -36,43 +39,38 @@ class AchievementsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<GameState>();
-    final unlocked = state.unlocked;
+    final state         = context.watch<GameState>();
+    final unlocked      = state.unlocked;
     final unlockedCount = unlocked.values.where((v) => v).length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080810),
+      backgroundColor: const Color(0xFF050510),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ────────────────────────────────────────────────────
+            // ── Header ──────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '🏆 Achievements',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    '🧫 Formula Tablets',
+                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$unlockedCount of ${kAchievements.length} unlocked',
+                    '$unlockedCount of ${kFormulas.length} formulas unlocked',
                     style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
-                  // Progress bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
-                      value: unlockedCount / kAchievements.length,
+                      value: unlockedCount / kFormulas.length,
                       backgroundColor: Colors.white10,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                      valueColor: const AlwaysStoppedAnimation<Color>(_kCyan),
                       minHeight: 8,
                     ),
                   ),
@@ -81,24 +79,24 @@ class AchievementsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // ── Stats Summary ─────────────────────────────────────────────
+            // ── Stats Summary ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildStatsSummary(state),
+              child: _buildLabStats(state),
             ),
             const SizedBox(height: 16),
 
-            // ── Achievement Grid ──────────────────────────────────────────
+            // ── Formula Tablets Grid ─────────────────────────────────────
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 physics: const BouncingScrollPhysics(),
-                itemCount: kAchievements.length,
+                itemCount: kFormulas.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (context, i) {
-                  final ach = kAchievements[i];
-                  final isUnlocked = unlocked[ach.id] ?? false;
-                  return _buildAchievementTile(ach, isUnlocked);
+                  final f          = kFormulas[i];
+                  final isUnlocked = unlocked[f.id] ?? false;
+                  return _buildFormulaTile(f, isUnlocked);
                 },
               ),
             ),
@@ -108,24 +106,24 @@ class AchievementsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSummary(GameState state) {
+  Widget _buildLabStats(GameState state) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: _kCyan.withOpacity(0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: _kCyan.withOpacity(0.12)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _miniStat('🎲', state.totalSpins.toString(), 'Spins'),
+          _miniStat('⚗️',  state.totalSpins.toString(),  'Experiments'),
           _divider(),
-          _miniStat('✅', state.totalWins.toString(), 'Wins'),
+          _miniStat('✅',  state.totalWins.toString(),  'Reactions'),
           _divider(),
-          _miniStat('🔥', state.bestStreak.toString(), 'Best Streak'),
+          _miniStat('🔥',  state.bestStreak.toString(), 'Best Chain'),
           _divider(),
-          _miniStat('🌟', state.scattersHit.toString(), 'Scatters'),
+          _miniStat('🌟',  state.scattersHit.toString(),'Catalysts'),
         ],
       ),
     );
@@ -136,8 +134,7 @@ class AchievementsScreen extends StatelessWidget {
       children: [
         Text(emoji, style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 2),
-        Text(value,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
       ],
     );
@@ -145,45 +142,45 @@ class AchievementsScreen extends StatelessWidget {
 
   Widget _divider() => Container(width: 1, height: 36, color: Colors.white10);
 
-  Widget _buildAchievementTile(Achievement ach, bool isUnlocked) {
+  Widget _buildFormulaTile(Formula f, bool isUnlocked) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isUnlocked ? ach.color.withOpacity(0.08) : const Color(0xFF0F0F18),
+        color: isUnlocked ? f.color.withOpacity(0.07) : const Color(0xFF0A0A18),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isUnlocked ? ach.color.withOpacity(0.5) : Colors.white.withOpacity(0.05),
+          color: isUnlocked ? f.color.withOpacity(0.55) : Colors.white.withOpacity(0.04),
           width: 1.5,
         ),
         boxShadow: isUnlocked
-            ? [BoxShadow(color: ach.color.withOpacity(0.15), blurRadius: 12)]
+            ? [BoxShadow(color: f.color.withOpacity(0.18), blurRadius: 14)]
             : [],
       ),
       child: Row(
         children: [
-          // Emoji / lock
           Container(
-            width: 50,
-            height: 50,
+            width: 50, height: 50,
             decoration: BoxDecoration(
-              color: isUnlocked ? ach.color.withOpacity(0.15) : Colors.white.withOpacity(0.04),
+              color: isUnlocked ? f.color.withOpacity(0.12) : Colors.white.withOpacity(0.03),
               shape: BoxShape.circle,
+              border: isUnlocked
+                  ? Border.all(color: f.color.withOpacity(0.4), width: 1)
+                  : null,
             ),
             child: Center(
               child: isUnlocked
-                  ? Text(ach.emoji, style: const TextStyle(fontSize: 28))
-                  : const Icon(Icons.lock, color: Colors.white24, size: 22),
+                  ? Text(f.emoji, style: const TextStyle(fontSize: 26))
+                  : const Icon(Icons.lock_outlined, color: Colors.white12, size: 22),
             ),
           ),
           const SizedBox(width: 14),
-          // Title + desc
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  ach.title,
+                  f.title,
                   style: TextStyle(
                     color: isUnlocked ? Colors.white : Colors.grey,
                     fontSize: 15,
@@ -192,7 +189,7 @@ class AchievementsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  ach.desc,
+                  f.desc,
                   style: TextStyle(
                     color: isUnlocked ? Colors.grey[400] : Colors.grey[700],
                     fontSize: 12,
@@ -201,18 +198,14 @@ class AchievementsScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Badge
           if (isUnlocked)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: ach.color.withOpacity(0.2),
+                color: f.color.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                '✓',
-                style: TextStyle(color: ach.color, fontWeight: FontWeight.bold),
-              ),
+              child: Text('✓', style: TextStyle(color: f.color, fontWeight: FontWeight.bold)),
             ),
         ],
       ),

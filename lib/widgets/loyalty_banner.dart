@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../game_state.dart';
 
+const _kCyan   = Color(0xFF00F5FF);
+const _kViolet = Color(0xFF7B2FFF);
+
 class LoyaltyBanner extends StatefulWidget {
   const LoyaltyBanner({super.key});
 
@@ -33,9 +36,7 @@ class _LoyaltyBannerState extends State<LoyaltyBanner> {
       final state = context.read<GameState>();
       if (!state.canClaimBonus) {
         final next = state.nextBonusTime;
-        if (next != null) {
-          setState(() => _remaining = next.difference(DateTime.now()));
-        }
+        if (next != null) setState(() => _remaining = next.difference(DateTime.now()));
       } else {
         setState(() => _remaining = Duration.zero);
       }
@@ -52,58 +53,48 @@ class _LoyaltyBannerState extends State<LoyaltyBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final state      = context.watch<GameState>();
-    final canClaim   = state.canClaimBonus;
-    final countdown  = _formatCountdown(_remaining);
+    final state    = context.watch<GameState>();
+    final canClaim = state.canClaimBonus;
+    final countdown = _formatCountdown(_remaining);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.amber, width: 1.5),
+        color: const Color(0xFF080820),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kCyan.withOpacity(0.4), width: 1.5),
         boxShadow: [
-          BoxShadow(
-            color: Colors.amber.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-            offset: const Offset(0, 4),
-          )
+          BoxShadow(color: _kCyan.withOpacity(0.12), blurRadius: 12, spreadRadius: 2),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left: icon + text
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.2),
+                  color: _kCyan.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.card_giftcard, color: Colors.amber, size: 28),
+                child: const Text('⚗️', style: TextStyle(fontSize: 22)),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 14),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Daily Reward',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Daily Reagent Drop',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text(
-                    canClaim ? 'Claim your free 500 Ks!' : 'Next bonus in $countdown',
+                    canClaim ? 'Collect 500 EU free reagents!' : 'Next drop in $countdown',
                     style: TextStyle(
-                      color: canClaim ? Colors.amberAccent : Colors.grey,
-                      fontSize: 13,
+                      color: canClaim ? _kCyan : Colors.grey,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -112,45 +103,47 @@ class _LoyaltyBannerState extends State<LoyaltyBanner> {
             ],
           ),
 
-          // Right: claim / disabled button
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: canClaim
-                ? ElevatedButton(
-                    key: const ValueKey('claim'),
-                    onPressed: () {
+                ? GestureDetector(
+                    key: const ValueKey('collect'),
+                    onTap: () {
                       state.claimBonus(500);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            '🎁 +500 Ks Daily Bonus claimed!',
+                            '⚗️ +500 EU Daily Reagents collected!',
                             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                           ),
-                          backgroundColor: Colors.amber,
+                          backgroundColor: _kCyan,
                           duration: Duration(seconds: 2),
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [_kCyan, Color(0xFF00A8B5)]),
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [BoxShadow(color: Color(0x7700F5FF), blurRadius: 10)],
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      child: const Text(
+                        'COLLECT',
+                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13),
+                      ),
                     ),
-                    child: const Text('CLAIM', style: TextStyle(fontWeight: FontWeight.bold)),
                   )
                 : Container(
                     key: const ValueKey('cooldown'),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.grey[800],
+                      color: Colors.grey[850],
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      'Claimed ✓',
-                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13),
+                      'Collected ✓',
+                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
           ),

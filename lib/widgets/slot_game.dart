@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../game_state.dart';
 
-// ─── Symbol Data ───────────────────────────────────────────────────────────
-class SlotSymbol {
+// ─── Molecule Symbol ────────────────────────────────────────────────────────
+class MoleculeSymbol {
   final String emoji;
   final String name;
-  final int multiplier; // multiplier when all 3 match
+  final int multiplier;
   final Color color;
   final bool isScatter;
-  const SlotSymbol({
+  const MoleculeSymbol({
     required this.emoji,
     required this.name,
     required this.multiplier,
@@ -20,30 +20,35 @@ class SlotSymbol {
   });
 }
 
-const List<SlotSymbol> kSymbols = [
-  SlotSymbol(emoji: "🍒", name: "Cherry",   multiplier: 3,  color: Color(0xFFFF4444)),
-  SlotSymbol(emoji: "🍋", name: "Lemon",    multiplier: 4,  color: Color(0xFFFFDD44)),
-  SlotSymbol(emoji: "🍊", name: "Orange",   multiplier: 5,  color: Color(0xFFFF8800)),
-  SlotSymbol(emoji: "🔔", name: "Bell",     multiplier: 8,  color: Color(0xFFFFCC00)),
-  SlotSymbol(emoji: "⭐", name: "Star",     multiplier: 10, color: Color(0xFFFFEB3B)),
-  SlotSymbol(emoji: "💎", name: "Diamond",  multiplier: 25, color: Color(0xFF44CCFF)),
-  SlotSymbol(emoji: "7️⃣", name: "Lucky 7", multiplier: 50, color: Color(0xFFFF2222)),
-  SlotSymbol(emoji: "🌟", name: "Scatter",  multiplier: 0,  color: Color(0xFFAA88FF), isScatter: true),
+const List<MoleculeSymbol> kSymbols = [
+  MoleculeSymbol(emoji: '⚗️',  name: 'Vial',      multiplier: 3,  color: Color(0xFF00CFFF)),
+  MoleculeSymbol(emoji: '🧬',  name: 'Helix',     multiplier: 4,  color: Color(0xFF00FF99)),
+  MoleculeSymbol(emoji: '🔬',  name: 'Scope',     multiplier: 5,  color: Color(0xFF88AAFF)),
+  MoleculeSymbol(emoji: '🔥',  name: 'Plasma',    multiplier: 8,  color: Color(0xFFFF6644)),
+  MoleculeSymbol(emoji: '🌀',  name: 'Vortex',    multiplier: 12, color: Color(0xFF9966FF)),
+  MoleculeSymbol(emoji: '💎',  name: 'Crystal',   multiplier: 25, color: Color(0xFF00F5FF)),
+  MoleculeSymbol(emoji: '☢️',  name: 'Catalyst',  multiplier: 50, color: Color(0xFFFF2244)),
+  MoleculeSymbol(emoji: '🌟',  name: 'Catalyst+', multiplier: 0,  color: Color(0xFFAA44FF), isScatter: true),
 ];
 
-// Weighted pool: higher-value symbols appear less
-final List<SlotSymbol> kPool = [
-  ...List.filled(8, kSymbols[0]),  // Cherry  (common)
-  ...List.filled(7, kSymbols[1]),  // Lemon
-  ...List.filled(6, kSymbols[2]),  // Orange
-  ...List.filled(5, kSymbols[3]),  // Bell
-  ...List.filled(4, kSymbols[4]),  // Star
-  ...List.filled(3, kSymbols[5]),  // Diamond (rare)
-  ...List.filled(2, kSymbols[6]),  // Lucky 7 (very rare)
+// Weighted pool — rarer molecules appear less
+final List<MoleculeSymbol> kPool = [
+  ...List.filled(8, kSymbols[0]),  // Vial      (common)
+  ...List.filled(7, kSymbols[1]),  // Helix
+  ...List.filled(6, kSymbols[2]),  // Scope
+  ...List.filled(5, kSymbols[3]),  // Plasma
+  ...List.filled(4, kSymbols[4]),  // Vortex
+  ...List.filled(3, kSymbols[5]),  // Crystal   (rare)
+  ...List.filled(2, kSymbols[6]),  // Catalyst  (legendary)
   ...List.filled(3, kSymbols[7]),  // Scatter
 ];
 
-// ─── Main Widget ────────────────────────────────────────────────────────────
+// Palette constants
+const kCyan   = Color(0xFF00F5FF);
+const kViolet = Color(0xFF7B2FFF);
+const kBg     = Color(0xFF050510);
+
+// ─── Main Widget ─────────────────────────────────────────────────────────────
 class SlotGame extends StatefulWidget {
   const SlotGame({super.key});
 
@@ -54,58 +59,63 @@ class SlotGame extends StatefulWidget {
 class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
   final Random _random = Random();
 
-  // Reels
-  late List<SlotSymbol> _reels;
-  late List<bool> _reelStopped;
+  late List<MoleculeSymbol> _reels;
+  late List<bool>  _reelStopped;
 
-  // Game state (balance now from GameState, local for display)
   int get balance => _gameState?.coins ?? 1000;
   GameState? _gameState;
-  int currentBet = 50;
+  int currentBet    = 50;
   int freeSpinsLeft = 0;
-  int winStreak = 0;
-  int totalWon = 0;
-  bool _isSpinning = false;
-  String _resultMessage = '🎰 Spin to win!';
-  bool _isCelebrating = false;
-  int _lastWinAmount = 0;
+  int winStreak     = 0;
+  int totalWon      = 0;
+  bool _isSpinning  = false;
+  String _resultMessage = '⚗️  Awaiting synthesis...';
+  bool _isCelebrating   = false;
+  int  _lastWinAmount   = 0;
 
-  // Reel rolling symbols (shown during spin)
-  late List<List<SlotSymbol>> _rollingSymbols;
+  late List<List<MoleculeSymbol>> _rollingSymbols;
   Timer? _spinTimer;
 
-  // Animations
   late AnimationController _celebrationCtrl;
   late AnimationController _pulseCtrl;
-  late Animation<double> _pulseAnim;
-  late AnimationController _reelShakeCtrl;
+  late Animation<double>   _pulseAnim;
+  late AnimationController _glowCtrl;
+  late Animation<double>   _glowAnim;
 
   final List<int> betOptions = [10, 25, 50, 100, 250];
+
+  static const _reactionLabels = {
+    'low':     '🧪 Mild Reaction!',
+    'medium':  '⚡ Chain Reaction!',
+    'high':    '🌋 CRITICAL SYNTHESIS ☢️',
+    'scatter': '🌀 CATALYST EVENT! +5 Boosts!',
+    'miss':    '🔬 No Reaction — Recalibrate…',
+    'partial': '💡 Partial Bond! +',
+    'free':    '✨ FREE SYNTHESIS! (',
+    'broke':   '⚠️ Insufficient Energy Units!',
+  };
 
   @override
   void initState() {
     super.initState();
-    _reels = [kSymbols[0], kSymbols[1], kSymbols[2]];
+    _reels       = [kSymbols[0], kSymbols[1], kSymbols[2]];
     _reelStopped = [true, true, true];
     _rollingSymbols = [for (var i = 0; i < 3; i++) [kPool[0]]];
 
     _celebrationCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
+      vsync: this, duration: const Duration(milliseconds: 1500));
 
     _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+      vsync: this, duration: const Duration(milliseconds: 700))
+      ..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.07).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
-    _reelShakeCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
+    _glowCtrl = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat(reverse: true);
+    _glowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -119,7 +129,7 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     _spinTimer?.cancel();
     _celebrationCtrl.dispose();
     _pulseCtrl.dispose();
-    _reelShakeCtrl.dispose();
+    _glowCtrl.dispose();
     super.dispose();
   }
 
@@ -130,32 +140,30 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
 
   void _spin() {
     if (_isSpinning) return;
-
-    final bool usingFreeSpins = freeSpinsLeft > 0;
+    final bool usingFree = freeSpinsLeft > 0;
     final gs = context.read<GameState>();
 
-    if (!usingFreeSpins && gs.coins < currentBet) {
-      setState(() => _resultMessage = '💸 Not enough coins! Add more!');
+    if (!usingFree && gs.coins < currentBet) {
+      setState(() => _resultMessage = _reactionLabels['broke']!);
       return;
     }
 
     setState(() {
-      _isSpinning = true;
+      _isSpinning   = true;
       _isCelebrating = false;
-      _reelStopped = [false, false, false];
-      if (!usingFreeSpins) {
+      _reelStopped  = [false, false, false];
+      if (!usingFree) {
         gs.spendCoins(currentBet);
       } else {
         freeSpinsLeft--;
       }
-      _resultMessage = usingFreeSpins
-          ? '✨ FREE SPIN! ($freeSpinsLeft left)'
-          : '🎰 Spinning...';
+      _resultMessage = usingFree
+          ? '${_reactionLabels['free']}$freeSpinsLeft left)'
+          : '🔬 Synthesizing...';
     });
     gs.recordSpin();
 
-    // Roll each reel with changing symbols
-    _spinTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
+    _spinTimer = Timer.periodic(const Duration(milliseconds: 75), (timer) {
       setState(() {
         for (int i = 0; i < 3; i++) {
           if (!_reelStopped[i]) {
@@ -168,40 +176,37 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
       });
     });
 
-    // Stop reels sequentially
     Future.delayed(const Duration(milliseconds: 500), () => _stopReel(0));
     Future.delayed(const Duration(milliseconds: 900), () => _stopReel(1));
     Future.delayed(const Duration(milliseconds: 1300), () {
       _stopReel(2);
       _spinTimer?.cancel();
       _spinTimer = null;
-      Future.delayed(const Duration(milliseconds: 100), _checkWin);
+      Future.delayed(const Duration(milliseconds: 100), _checkReaction);
     });
   }
 
   void _stopReel(int index) {
     final symbol = kPool[_random.nextInt(kPool.length)];
     setState(() {
-      _reels[index] = symbol;
+      _reels[index]       = symbol;
       _reelStopped[index] = true;
     });
   }
 
-  void _checkWin() {
+  void _checkReaction() {
     final s1 = _reels[0];
     final s2 = _reels[1];
     final s3 = _reels[2];
 
-    // Count scatters
-    int scatterCount = [s1, s2, s3].where((s) => s.isScatter).length;
+    final scatterCount = [s1, s2, s3].where((s) => s.isScatter).length;
 
     if (scatterCount >= 3) {
-      // 3 scatters = free spins
       final gs = context.read<GameState>();
       setState(() {
         freeSpinsLeft += 5;
-        _resultMessage = '🌟 SCATTER! +5 Free Spins!';
-        _isSpinning = false;
+        _resultMessage = _reactionLabels['scatter']!;
+        _isSpinning    = false;
         winStreak++;
       });
       gs.recordWin(isScatter: true);
@@ -210,45 +215,45 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     }
 
     if (s1.emoji == s2.emoji && s2.emoji == s3.emoji) {
-      // Full match
-      final gs = context.read<GameState>();
+      // Full match — critical synthesis
+      final gs         = context.read<GameState>();
       final multiplier = s1.multiplier + (winStreak > 2 ? winStreak : 0);
-      final winAmount = currentBet * multiplier;
-      final isJack = winAmount >= currentBet * 20;
+      final winAmount  = currentBet * multiplier;
+      final isJack     = winAmount >= currentBet * 20;
       setState(() {
         gs.addCoins(winAmount);
-        totalWon += winAmount;
+        totalWon       += winAmount;
         winStreak++;
-        _lastWinAmount = winAmount;
-        _resultMessage = isJack
-            ? '🎉 JACKPOT! +$winAmount coins!'
-            : '✅ ${s1.name} WIN! +$winAmount coins!';
-        _isSpinning = false;
+        _lastWinAmount  = winAmount;
+        _resultMessage  = isJack
+            ? '${_reactionLabels['high']} +$winAmount EU!'
+            : '${_reactionLabels['medium']} ${s1.name} x${s1.multiplier}  +$winAmount EU!';
+        _isSpinning     = false;
       });
       gs.recordWin(isJackpot: isJack);
       gs.checkCoinsAchievements();
       _triggerCelebration(isJack ? 2000 : 1000);
     } else if (s1.emoji == s2.emoji || s2.emoji == s3.emoji || s1.emoji == s3.emoji) {
-      // Partial match
-      final gs = context.read<GameState>();
+      // Partial bond
+      final gs        = context.read<GameState>();
       final winAmount = currentBet * 2;
       setState(() {
         gs.addCoins(winAmount);
-        totalWon += winAmount;
+        totalWon       += winAmount;
         winStreak++;
-        _lastWinAmount = winAmount;
-        _resultMessage = '👍 Small Win! +$winAmount coins';
-        _isSpinning = false;
+        _lastWinAmount  = winAmount;
+        _resultMessage  = '${_reactionLabels['partial']}$winAmount EU';
+        _isSpinning     = false;
       });
       gs.recordWin();
     } else {
       context.read<GameState>().recordLoss();
       setState(() {
-        winStreak = 0;
+        winStreak      = 0;
         _resultMessage = freeSpinsLeft > 0
-            ? '🎁 Free spin remaining: $freeSpinsLeft'
-            : '😞 Try Again!';
-        _isSpinning = false;
+            ? '🎁 Free synthesis remaining: $freeSpinsLeft'
+            : _reactionLabels['miss']!;
+        _isSpinning    = false;
       });
     }
   }
@@ -261,21 +266,21 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     });
   }
 
-  void _addCoins() {
+  void _addEnergy() {
     final gs = context.read<GameState>();
     gs.addCoins(500);
-    setState(() => _resultMessage = '💰 +500 Coins Added! Good luck!');
+    setState(() => _resultMessage = '⚡ +500 EU injected into reactor!');
   }
 
-  void _showPaytable(BuildContext context) {
+  void _showFormulas(BuildContext context) {
     showDialog(
       context: context,
       barrierColor: Colors.black87,
       builder: (ctx) => Dialog(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: const Color(0xFF0A0A2A),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: Colors.amber, width: 2),
+          side: const BorderSide(color: kCyan, width: 1.5),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -283,71 +288,65 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                '🎮 HOW TO PLAY',
+                '⚗️  FORMULA GUIDE',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
-                  color: Colors.amber,
+                  color: kCyan,
                   letterSpacing: 2,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               const Text(
-                'Match 3 symbols to earn bonus coins!',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
+                'Match 3 molecules to trigger a reaction',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
-              const Divider(color: Colors.amber, height: 24),
+              const Divider(color: kCyan, height: 24),
               ...kSymbols.where((s) => !s.isScatter).map((sym) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      children: [
-                        Text(sym.emoji, style: const TextStyle(fontSize: 28)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            sym.name,
-                            style: TextStyle(color: sym.color, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: sym.color.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: sym.color, width: 1),
-                          ),
-                          child: Text(
-                            'x${sym.multiplier}',
-                            style: TextStyle(color: sym.color, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                        ),
-                      ],
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  children: [
+                    Text(sym.emoji, style: const TextStyle(fontSize: 26)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(sym.name,
+                        style: TextStyle(color: sym.color, fontSize: 14, fontWeight: FontWeight.bold)),
                     ),
-                  )),
-              const Divider(color: Colors.purple, height: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: sym.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: sym.color, width: 1),
+                      ),
+                      child: Text('x${sym.multiplier}',
+                        style: TextStyle(color: sym.color, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              )),
+              const Divider(color: kViolet, height: 24),
               Row(
                 children: const [
-                  Text("🌟🌟🌟", style: TextStyle(fontSize: 24)),
+                  Text('🌟🌟🌟', style: TextStyle(fontSize: 22)),
                   SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      "Scatter",
-                      style: TextStyle(color: Color(0xFFAA88FF), fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
+                    child: Text('Catalyst+ Scatter',
+                      style: TextStyle(color: Color(0xFFAA44FF), fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
-                  Text("5 Free Spins!", style: TextStyle(color: Color(0xFFAA88FF), fontWeight: FontWeight.bold)),
+                  Text('5 Free Reactions!', style: TextStyle(color: Color(0xFFAA44FF), fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.amber,
+                  backgroundColor: kCyan,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
-                child: const Text("CLOSE", style: TextStyle(fontWeight: FontWeight.w900)),
+                child: const Text('CLOSE LAB', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
               ),
             ],
           ),
@@ -356,96 +355,102 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
+  // ─── Build ─────────────────────────────────────────────────────────────────
 
   Widget _buildReelSymbol(int index) {
     final stopped = _reelStopped[index];
-    final symbol = _reels[index];
-
+    final symbol  = _reels[index];
     if (stopped) {
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
-        child: Text(
-          symbol.emoji,
+        child: Text(symbol.emoji,
           key: ValueKey('${symbol.emoji}_$index'),
-          style: const TextStyle(fontSize: 54),
-        ),
+          style: const TextStyle(fontSize: 50)),
       );
     }
-
-    // Rolling animation: show two blurred symbols
     return _rollingSymbols[index].isNotEmpty
-        ? Text(
-            _rollingSymbols[index].last.emoji,
-            style: const TextStyle(fontSize: 54),
-          )
-        : const Text('❓', style: TextStyle(fontSize: 54));
+        ? Text(_rollingSymbols[index].last.emoji, style: const TextStyle(fontSize: 50))
+        : const Text('🌀', style: TextStyle(fontSize: 50));
   }
 
   Widget _buildReel(int index) {
     final stopped = _reelStopped[index];
-    final symbol = _reels[index];
-    final isWinningReel = !_isSpinning &&
-        _isCelebrating &&
+    final symbol  = _reels[index];
+    final isWin   = !_isSpinning && _isCelebrating &&
         (_reels[0].emoji == _reels[1].emoji && _reels[1].emoji == _reels[2].emoji);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: 85,
-      height: 95,
-      decoration: BoxDecoration(
-        color: isWinningReel
-            ? symbol.color.withOpacity(0.2)
-            : Colors.black.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isWinningReel ? symbol.color : Colors.amber.withOpacity(0.4),
-          width: isWinningReel ? 2 : 1,
+    return AnimatedBuilder(
+      animation: _glowAnim,
+      builder: (_, child) => AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 85,
+        height: 95,
+        decoration: BoxDecoration(
+          color: isWin
+              ? symbol.color.withOpacity(0.15)
+              : Colors.black.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isWin
+                ? symbol.color
+                : stopped
+                    ? kCyan.withOpacity(0.25)
+                    : kCyan.withOpacity(0.6 * _glowAnim.value),
+            width: isWin ? 2 : 1,
+          ),
+          boxShadow: isWin
+              ? [BoxShadow(color: symbol.color.withOpacity(0.6), blurRadius: 20, spreadRadius: 3)]
+              : stopped
+                  ? [const BoxShadow(color: Color(0x2200F5FF), blurRadius: 6)]
+                  : [BoxShadow(color: kCyan.withOpacity(0.3 * _glowAnim.value), blurRadius: 14)],
         ),
-        boxShadow: isWinningReel
-            ? [BoxShadow(color: symbol.color.withOpacity(0.6), blurRadius: 18, spreadRadius: 3)]
-            : stopped
-                ? []
-                : [BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 8)],
+        child: Center(child: child),
       ),
-      child: Center(child: _buildReelSymbol(index)),
+      child: _buildReelSymbol(index),
+    );
+  }
+
+  Widget _buildLabMachineDivider() {
+    return AnimatedBuilder(
+      animation: _glowAnim,
+      builder: (_, __) => Container(
+        width: 2, height: 60,
+        margin: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              kCyan.withOpacity(0.5 * _glowAnim.value),
+              Colors.transparent,
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch GameState so coin display stays in sync
-    final gs = context.watch<GameState>();
+    context.watch<GameState>(); // keep in sync
     return Stack(
       children: [
         Column(
           children: [
-            // ── Balance + Stats Row ─────────────────────────────────────
             _buildStatsRow(),
             const SizedBox(height: 16),
-
-            // ── Free Spins Indicator ─────────────────────────────────────
             if (freeSpinsLeft > 0) _buildFreeSpinsIndicator(),
             if (freeSpinsLeft > 0) const SizedBox(height: 12),
-
-            // ── Slot Machine ─────────────────────────────────────────────
-            _buildSlotMachine(),
+            _buildReactor(),
             const SizedBox(height: 24),
-
-            // ── Result Message ───────────────────────────────────────────
             _buildResultMessage(),
             const SizedBox(height: 20),
-
-            // ── Bet Selector ─────────────────────────────────────────────
-            _buildBetSelector(),
+            _buildEnergySelector(),
             const SizedBox(height: 20),
-
-            // ── Action Buttons ───────────────────────────────────────────
             _buildActionButtons(context),
           ],
         ),
-
-        // ── Win Celebration Overlay ──────────────────────────────────────
         if (_isCelebrating) _buildCelebrationOverlay(),
       ],
     );
@@ -455,61 +460,49 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Balance
-        Expanded(
-          child: _statCard(
-            icon: Icons.monetization_on_rounded,
-            label: 'COINS',
-            value: balance.toString(),
-            color: Colors.amber,
-          ),
-        ),
+        Expanded(child: _statCard(
+          icon: Icons.bolt_rounded,
+          label: 'ENERGY',
+          value: balance.toString(),
+          color: kCyan,
+        )),
         const SizedBox(width: 10),
-        // Win Streak
-        Expanded(
-          child: _statCard(
-            icon: Icons.local_fire_department,
-            label: 'STREAK',
-            value: winStreak.toString(),
-            color: winStreak > 3 ? Colors.orange : Colors.grey,
-          ),
-        ),
+        Expanded(child: _statCard(
+          icon: Icons.local_fire_department_rounded,
+          label: 'STREAK',
+          value: winStreak.toString(),
+          color: winStreak > 3 ? const Color(0xFFFF6644) : Colors.grey,
+        )),
         const SizedBox(width: 10),
-        // Total Won
-        Expanded(
-          child: _statCard(
-            icon: Icons.emoji_events,
-            label: 'TOTAL WON',
-            value: totalWon.toString(),
-            color: Colors.greenAccent,
-          ),
-        ),
+        Expanded(child: _statCard(
+          icon: Icons.science_rounded,
+          label: 'COLLECTED',
+          value: totalWon.toString(),
+          color: const Color(0xFF00FF99),
+        )),
       ],
     );
   }
 
   Widget _statCard({
     required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
+    required String   label,
+    required String   value,
+    required Color    color,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withOpacity(0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.4), width: 1),
+        border: Border.all(color: color.withOpacity(0.35), width: 1),
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(color: color.withOpacity(0.7), fontSize: 9, letterSpacing: 1)),
-          Text(value,
-              style: TextStyle(
-                  color: color, fontSize: 16, fontWeight: FontWeight.w900)),
+          Text(label, style: TextStyle(color: color.withOpacity(0.7), fontSize: 9, letterSpacing: 1)),
+          Text(value,  style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -521,25 +514,21 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6A0DAD), Color(0xFFAA88FF)],
-          ),
+          gradient: const LinearGradient(colors: [kViolet, Color(0xFFAA44FF)]),
           borderRadius: BorderRadius.circular(30),
-          boxShadow: const [
-            BoxShadow(color: Color(0x884400CC), blurRadius: 12, spreadRadius: 2),
-          ],
+          boxShadow: const [BoxShadow(color: Color(0x887B2FFF), blurRadius: 14, spreadRadius: 2)],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('✨', style: TextStyle(fontSize: 18)),
+            const Text('🌀', style: TextStyle(fontSize: 18)),
             const SizedBox(width: 8),
             Text(
-              'FREE SPINS: $freeSpinsLeft',
+              'FREE REACTIONS: $freeSpinsLeft',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
-                fontSize: 16,
+                fontSize: 15,
                 letterSpacing: 1.5,
               ),
             ),
@@ -549,26 +538,32 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildSlotMachine() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: _isSpinning
-              ? [const Color(0xFF2A1A00), const Color(0xFF1A1000)]
-              : [const Color(0xFF1A1A1A), const Color(0xFF0D0D0D)],
+  Widget _buildReactor() {
+    return AnimatedBuilder(
+      animation: _glowAnim,
+      builder: (_, child) => AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: _isSpinning
+                ? [const Color(0xFF080820), const Color(0xFF050510)]
+                : [const Color(0xFF0A0A20), const Color(0xFF050510)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _isSpinning
+                ? kCyan.withOpacity(0.9 * _glowAnim.value)
+                : kCyan.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: _isSpinning
+              ? [BoxShadow(color: kCyan.withOpacity(0.4 * _glowAnim.value), blurRadius: 30, spreadRadius: 4)]
+              : [BoxShadow(color: kCyan.withOpacity(0.08), blurRadius: 12)],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: _isSpinning ? Colors.amber : Colors.amber.withOpacity(0.5),
-          width: 2,
-        ),
-        boxShadow: _isSpinning
-            ? [const BoxShadow(color: Color(0xAAFFCC00), blurRadius: 30, spreadRadius: 4)]
-            : [const BoxShadow(color: Color(0x33FFCC00), blurRadius: 12)],
+        child: child,
       ),
       child: Column(
         children: [
@@ -576,9 +571,9 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildReel(0),
-              _buildDivider(),
+              _buildLabMachineDivider(),
               _buildReel(1),
-              _buildDivider(),
+              _buildLabMachineDivider(),
               _buildReel(2),
             ],
           ),
@@ -586,8 +581,8 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: _reels.map((s) => Text(
-              s.isScatter ? 'SCATTER' : s.name.toUpperCase(),
-              style: TextStyle(color: s.color.withOpacity(0.8), fontSize: 9, letterSpacing: 1),
+              s.name.toUpperCase(),
+              style: TextStyle(color: s.color.withOpacity(0.7), fontSize: 9, letterSpacing: 1),
             )).toList(),
           ),
         ],
@@ -595,30 +590,16 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildDivider() {
-    return Container(
-      width: 2,
-      height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            Colors.amber.withOpacity(0.4),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildResultMessage() {
-    final isWin = _resultMessage.contains('WIN') ||
-        _resultMessage.contains('JACKPOT') ||
-        _resultMessage.contains('SCATTER');
-    final isFree = _resultMessage.contains('FREE') || _resultMessage.contains('Free');
+    final isWin     = _resultMessage.contains('Reaction') || _resultMessage.contains('SYNTHESIS') || _resultMessage.contains('Bond');
+    final isScatter = _resultMessage.contains('CATALYST');
+    final isFree    = _resultMessage.contains('FREE');
+
+    Color msgColor = Colors.grey[400]!;
+    Color bgColor  = Colors.transparent;
+    if (isWin)     { msgColor = kCyan;                  bgColor = kCyan.withOpacity(0.08); }
+    if (isScatter) { msgColor = const Color(0xFFAA44FF); bgColor = const Color(0xFF7B2FFF).withOpacity(0.08); }
+    if (isFree)    { msgColor = const Color(0xFF00FF99); bgColor = const Color(0xFF00FF99).withOpacity(0.07); }
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
@@ -626,41 +607,24 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
         key: ValueKey(_resultMessage),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isWin
-              ? Colors.amber.withOpacity(0.12)
-              : isFree
-                  ? Colors.purple.withOpacity(0.12)
-                  : Colors.transparent,
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           _resultMessage,
-          style: TextStyle(
-            color: isWin
-                ? Colors.amber
-                : isFree
-                    ? const Color(0xFFAA88FF)
-                    : Colors.grey[400],
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: msgColor, fontSize: 16, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
       ),
     );
   }
 
-  Widget _buildBetSelector() {
+  Widget _buildEnergySelector() {
     return Column(
       children: [
         Text(
-          'COINS PER SPIN',
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 11,
-            letterSpacing: 2,
-            fontWeight: FontWeight.bold,
-          ),
+          'ENERGY UNITS PER REACTION',
+          style: TextStyle(color: Colors.grey[600], fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
         Row(
@@ -675,21 +639,21 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.amber : Colors.transparent,
+                    color: isSelected ? kCyan : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? Colors.amber : Colors.grey.withOpacity(0.4),
+                      color: isSelected ? kCyan : Colors.grey.withOpacity(0.3),
                       width: isSelected ? 2 : 1,
                     ),
                     boxShadow: isSelected
-                        ? [const BoxShadow(color: Color(0x88FFCC00), blurRadius: 8)]
+                        ? const [BoxShadow(color: Color(0x8800F5FF), blurRadius: 10)]
                         : [],
                   ),
                   child: Text(
                     bet.toString(),
                     style: TextStyle(
                       color: isSelected ? Colors.black : Colors.grey[400],
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -705,36 +669,34 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
   Widget _buildActionButtons(BuildContext context) {
     return Column(
       children: [
-        // Main SPIN button
+        // Main SYNTHESIZE button
         GestureDetector(
           onTap: _spin,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
             decoration: BoxDecoration(
               gradient: _isSpinning
-                  ? const LinearGradient(colors: [Color(0xFF888800), Color(0xFF665500)])
+                  ? const LinearGradient(colors: [Color(0xFF003344), Color(0xFF001122)])
                   : const LinearGradient(
-                      colors: [Color(0xFFFFCC00), Color(0xFFFF8800)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [kCyan, kViolet],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
               borderRadius: BorderRadius.circular(40),
               boxShadow: _isSpinning
                   ? []
-                  : const [
-                      BoxShadow(color: Color(0xAAFF8800), blurRadius: 20, spreadRadius: 2),
-                    ],
+                  : const [BoxShadow(color: Color(0xAA00F5FF), blurRadius: 22, spreadRadius: 2)],
             ),
             child: Text(
               _isSpinning
-                  ? '⏳ SPINNING...'
+                  ? '⏳ REACTING...'
                   : freeSpinsLeft > 0
-                      ? '✨ FREE SPIN!'
-                      : '🎰  SPIN',
+                      ? '🌀 FREE REACTION!'
+                      : '⚗️  SYNTHESIZE',
               style: TextStyle(
-                color: _isSpinning ? Colors.grey[300] : Colors.black,
-                fontSize: 22,
+                color: _isSpinning ? Colors.grey[400] : Colors.white,
+                fontSize: 20,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 2,
               ),
@@ -743,30 +705,27 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 16),
 
-        // Bottom row: Paytable + Add Coins
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Paytable
             OutlinedButton.icon(
-              onPressed: () => _showPaytable(context),
-              icon: const Icon(Icons.table_chart_outlined, size: 16, color: Colors.amber),
-              label: const Text('HOW TO PLAY', style: TextStyle(color: Colors.amber, fontSize: 12)),
+              onPressed: () => _showFormulas(context),
+              icon: const Icon(Icons.biotech_outlined, size: 16, color: kCyan),
+              label: const Text('FORMULA GUIDE', style: TextStyle(color: kCyan, fontSize: 12)),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.amber, width: 1),
+                side: BorderSide(color: kCyan.withOpacity(0.5), width: 1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               ),
             ),
             const SizedBox(width: 12),
-            // Add coins
             if (balance < 100)
               OutlinedButton.icon(
-                onPressed: _addCoins,
-                icon: const Icon(Icons.add_circle_outline, size: 16, color: Colors.greenAccent),
-                label: const Text('+500 Coins', style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
+                onPressed: _addEnergy,
+                icon: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFF00FF99)),
+                label: const Text('+500 EU', style: TextStyle(color: Color(0xFF00FF99), fontSize: 12)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.greenAccent, width: 1),
+                  side: const BorderSide(color: Color(0xFF00FF99), width: 1),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 ),
@@ -786,73 +745,48 @@ class _SlotGameState extends State<SlotGame> with TickerProviderStateMixin {
             final t = _celebrationCtrl.value;
             return Stack(
               children: [
-                // Shimmer overlay
                 Opacity(
-                  opacity: (1 - t) * 0.3,
+                  opacity: (1 - t) * 0.25,
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
-                        colors: [
-                          Colors.amber.withOpacity(0.6),
-                          Colors.transparent,
-                        ],
+                        colors: [kCyan.withOpacity(0.5), Colors.transparent],
                         radius: 1.5,
                       ),
                     ),
                   ),
                 ),
-                // Floating win amount
-                if (_lastWinAmount > 0)
-                  Positioned(
-                    top: 80 + (t * -60),
-                    left: 0,
-                    right: 0,
-                    child: Opacity(
-                      opacity: (1 - t).clamp(0.0, 1.0),
-                      child: Text(
-                        '+$_lastWinAmount',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.amber,
-                          fontSize: 48,
-                          fontWeight: FontWeight.w900,
-                          shadows: [Shadow(color: Colors.orange, blurRadius: 20)],
-                        ),
-                      ),
-                    ),
-                  ),
-                // Confetti dots
-                ...List.generate(12, (i) {
-                  final angle = (i / 12) * 2 * pi;
-                  final radius = t * 120;
-                  final x = cos(angle) * radius;
-                  final y = sin(angle) * radius;
-                  return Positioned(
-                    left: MediaQuery.of(context).size.width / 2 + x - 6,
-                    top: 160 + y,
-                    child: Opacity(
-                      opacity: (1 - t).clamp(0.0, 1.0),
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: [
-                            Colors.amber,
-                            Colors.orange,
-                            Colors.yellow,
-                            Colors.red,
-                          ][i % 4],
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+                ..._buildParticles(t),
               ],
             );
           },
         ),
       ),
     );
+  }
+
+  List<Widget> _buildParticles(double t) {
+    return List.generate(12, (i) {
+      final angle  = (i / 12) * 2 * pi;
+      final radius = 80 + 120 * t;
+      final dx     = cos(angle) * radius;
+      final dy     = sin(angle) * radius;
+      final colors = [kCyan, kViolet, const Color(0xFF00FF99), const Color(0xFFFF6644)];
+      return Positioned(
+        left: MediaQuery.of(context).size.width / 2 + dx - 6,
+        top:  280 + dy - 6,
+        child: Opacity(
+          opacity: (1 - t).clamp(0.0, 1.0),
+          child: Container(
+            width: 8, height: 8,
+            decoration: BoxDecoration(
+              color: colors[i % colors.length],
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: colors[i % colors.length].withOpacity(0.8), blurRadius: 6)],
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
