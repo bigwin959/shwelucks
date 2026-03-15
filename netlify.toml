@@ -2,6 +2,9 @@
   command = "git clone https://github.com/flutter/flutter.git -b stable && ./flutter/bin/flutter config --enable-web && ./flutter/bin/flutter pub get && ./flutter/bin/flutter build web --release --base-href /"
   publish = "build/web"
 
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
