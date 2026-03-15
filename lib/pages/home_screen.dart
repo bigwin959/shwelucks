@@ -39,18 +39,13 @@ class HomeScreen extends StatelessWidget {
   Widget _buildTitleRow() {
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: const Color(0xFF080820),
-            border: Border.all(color: _kCyan.withOpacity(0.5), width: 1.5),
-            boxShadow: const [BoxShadow(color: Color(0x4400F5FF), blurRadius: 10)],
-          ),
-          child: const Center(child: Text('⚗️', style: TextStyle(fontSize: 24))),
+        // Real ShweLucks logo
+        SizedBox(
+          width: 88,
+          height: 88,
+          child: Image.asset('assets/logo.png', fit: BoxFit.contain),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -59,8 +54,8 @@ class HomeScreen extends StatelessWidget {
                 colors: [_kCyan, _kViolet],
               ).createShader(b),
               child: const Text(
-                'Alchemy Lab',
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1),
+                'ShweLucks',
+                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 1.5),
               ),
             ),
             const Text(
